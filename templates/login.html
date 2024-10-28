@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .messages { color: red; list-style: none; padding: 0; }
+        .form-container { max-width: 400px; margin: auto; padding: 1em; border: 1px solid #ccc; border-radius: 5px; }
+        .form-container label { display: block; margin-bottom: 0.5em; }
+        .form-container input { width: 100%; padding: 0.5em; margin-bottom: 1em; }
+        .messages .success { color: green; }
+        .messages .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Login to make a reservation.</h2>
+
+
+
+        <!-- Login Form -->
+        <form method="post" action="{{ url_for('login') }}">
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required autocomplete="off">
+
+            <input type="submit" value="Login">
+        </form>
+    </div>
+</body>
+</html>
