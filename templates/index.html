@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width-device-width, initial-scale=1.0">
+    <title>Workstation Reservation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <h2>Reserve a PC</h2>
+        <ul id="pc-list">
+            {% for pc in pcs %}
+            <li>
+                <a href="{{ url_for('reserve', pc_id=pc.id) }}" class="pc-link">
+                    {{ pc.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Available PCs</h1>
+        <div class="pc-grid">
+            {% for pc in pcs %}
+                <div class="pc-item {{ 'reserved' if pc.is_reserved else 'available' }}">
+                    {{ pc.name }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

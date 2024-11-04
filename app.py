@@ -74,7 +74,17 @@ def login():
         else:
             flash("Credentials incorrect")
     return render_template('login.html')
-
+@app.route('/')
+def index():
+    pcs = Device.query.all()
+    return render_template('index.html', pcs=pcs)
+@app.route('/reserve/<string:hostname>')
+def reserve(hostname):
+    device = Device.query.filter_by(hostname=hostname).first()
+    if device and not device.has_reservation:
+        device.has_reservation = True
+        database.session.commit() #IMPLEMENT AUDIT LOGGING
+    return redirect(url_for('index'))
 @app.route('/logout')
 def logout():
     session.clear()  # Clear the session
