@@ -1,22 +1,19 @@
-#Configurations from environment variables
-from os import environ
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+import os
 from datetime import timedelta
 
-#Initialise Flask
-app = Flask(__name__)
-class Config:
-    #Sessions Config
-    app.config['SECRET_KEY'] = environ.get('SECRET_KEY')
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
-    # DB Config
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///main.db'
-    app.config['SQLALCHEMY_BINDS'] = {
-        'auditLogs': 'sqlite:///auditLogs.db',
-        'users': 'sqlite:///users.db',
-        'devices': 'sqlite:///devices.db',
-        'reservations': 'sqlite:///reservations.db'
+class Config:
+    # Sessions Config
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')  # Provide a default for local development
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
+
+    # MySQL Database Config
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/MySQLEAM'
+
+    # Example of using MySQL for additional binds
+    SQLALCHEMY_BINDS = {
+        'auditLogs': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/auditLogs',
+        'users': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/users',
+        'devices': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/devices',
+        'reservations': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/reservations'
     }
