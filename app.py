@@ -12,17 +12,20 @@ from urllib.parse import urlparse
 from passlib.handlers.sha2_crypt import sha256_crypt
 
 from config import Config
+from dbManager import database, tablesCheck
 from dbManager import init_app, Device, User, Reservation, AuditLog
 app = Flask(__name__)
+app.config.from_object(Config) #Fetch Config class and apply
+app.debug = True
 init_app(app)
+
 
 socketio = SocketIO(app, ssl_context='adhoc') #enable SSL, 'adhoc' self signs the certificate, DEV ONLY
 
-app.config.from_object(Config) #Fetch Config class and apply
+
 #Initialise extensions
 login_manager = LoginManager()
 login_manager.init_app(app)
-database = SQLAlchemy(app)
 
 def isSafeRedirect(target):
     if not target: #Prevents user from being unintentionally redirected if no target set
@@ -38,6 +41,15 @@ def lockPC():
 
 def authUser():
     print()
+
+@login_manager.user_loader
+def load_user(username):
+    return User.query.get(username)  # Adjust this if your primary key is not `username`
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -55,10 +67,13 @@ def login():
         else:
             flash("Credentials incorrect")
     return render_template('login.html')
-@app.route('/')
-def index():
-    pcs = Device.query.all()
-    return render_template('index.html', pcs=pcs)
+
+@app.route('/room/<string:current_room>')
+def room(current_room):
+    # Get all devices in the specified room
+    devices = Device.query.filter_by(room=current_room).all()
+    return render_template('room.html', current_room=current_room, devices=devices)
+
 @app.route('/reserve/<string:hostname>')
 def reserve(hostname):
     device = Device.query.filter_by(hostname=hostname).first()
@@ -66,6 +81,7 @@ def reserve(hostname):
         device.has_reservation = True
         database.session.commit() #IMPLEMENT AUDIT LOGGING
     return redirect(url_for('index'))
+
 @app.route('/logout')
 def logout():
     session.clear()  # Clear the session
@@ -76,6 +92,6 @@ def set_secure_cookie(response):
     response.set_cookie('session', secure = True, httponly=True) #Prevents clientside scripts from accessing cookie
     return response
 
-
 if __name__ == "__main__":
-    main()  # This will only run if this script is executed directly
+    tablesCheck()
+    app.run()  # This will only run if this script is executed directly

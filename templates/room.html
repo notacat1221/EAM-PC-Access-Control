@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ current_room }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='room.css') }}">
+</head>
+<body>
+    <h1>{{ current_room }}</h1>
+    <h2>Available Computers</h2>
+
+    <div class="devices-container">
+        {% for device in devices %}
+            <div class="device">
+                <p class="hostname">{{ device.hostname }}</p>
+                {% if device.has_reservation %}
+                    <p class="status reserved">Reserved</p>
+                {% else %}
+                    <a href="{{ url_for('reserve', hostname=device.hostname) }}" class="reserve-btn">Reserve</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+
+    <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>

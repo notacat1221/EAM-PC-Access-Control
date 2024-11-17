@@ -8,12 +8,13 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
 
     # MySQL Database Config
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/MySQLEAM'
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://PyManager:%Pa55w0rd@localhost/MYSQLEAM"
 
     # Example of using MySQL for additional binds
     SQLALCHEMY_BINDS = {
-        'auditLogs': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/auditLogs',
-        'users': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/users',
-        'devices': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/devices',
-        'reservations': 'mysql+pymysql://Pypeline:%Pa55w0rd@localhost/reservations'
+        'auditlogs': 'mysql+pymysql://PyManager:%Pa55w0rd@localhost/auditLogs',
+        'users': 'mysql+pymysql://PyManager:%Pa55w0rd@localhost/users',
+        'devices': 'mysql+pymysql://PyManager:%Pa55w0rd@localhost/devices',
+        'reservations': 'mysql+pymysql://PyManager:%Pa55w0rd@localhost/reservations'
     }
+

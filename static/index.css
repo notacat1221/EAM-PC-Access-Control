@@ -1,0 +1,44 @@
+/* Basic styling for the page */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+.lab-container {
+    width: 90%;
+    max-width: 800px;
+}
+
+/* Room container styling */
+.room {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #e8e8e8;
+}
+
+/* Bench styling */
+.bench {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+}
+
+/* Desktop box styling */
+.desktop {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+}

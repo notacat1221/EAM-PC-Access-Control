@@ -2,35 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width-device-width, initial-scale=1.0">
-    <title>Workstation Reservation System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Lab Representation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
 </head>
 <body>
-<div class="container">
-    <div class="sidebar">
-        <h2>Reserve a PC</h2>
-        <ul id="pc-list">
-            {% for pc in pcs %}
-            <li>
-                <a href="{{ url_for('reserve', pc_id=pc.id) }}" class="pc-link">
-                    {{ pc.name }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div class="main-content">
-        <h1>Available PCs</h1>
-        <div class="pc-grid">
-            {% for pc in pcs %}
-                <div class="pc-item {{ 'reserved' if pc.is_reserved else 'available' }}">
-                    {{ pc.name }}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
+    <h1>Choose a Room</h1>
+    <ul>
+        <li><a href="{{ url_for('room', current_room='Room1') }}">Room 1</a></li>
+        <li><a href="{{ url_for('room', current_room='Room2') }}">Room 2</a></li>
+        <!-- Add more rooms as needed -->
+    </ul>
 </body>
 </html>

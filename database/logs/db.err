@@ -1,0 +1,47 @@
+2024-11-14T18:19:09.631053Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2024-11-14T18:19:09.861888Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe (mysqld 9.1.0) starting as process 17300
+2024-11-14T18:19:09.899485Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2024-11-14T18:19:10.667350Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2024-11-14T18:19:11.211903Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2024-11-14T18:19:11.213556Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2024-11-14T18:19:11.271218Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2024-11-14T18:19:11.271378Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: ready for connections. Version: '9.1.0'  socket: ''  port: 3306  MySQL Community Server - GPL.
+2024-11-14T19:11:07.695506Z 12 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2024-11-14T19:11:08.523807Z 13 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2024-11-14T19:12:02.622895Z 14 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2024-11-14T19:12:03.397205Z 15 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2024-11-15T03:32:12.583220Z 0 [System] [MY-013105] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Normal shutdown.
+2024-11-15T03:32:15.597291Z 0 [Warning] [MY-010909] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Forcing close of thread 23  user: 'root'.
+2024-11-15T03:32:16.361827Z 0 [System] [MY-010910] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Shutdown complete (mysqld 9.1.0)  MySQL Community Server - GPL.
+2024-11-15T03:32:16.363451Z 0 [System] [MY-015016] [Server] MySQL Server - end.
+2024-11-15T03:32:17.169009Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2024-11-15T03:32:17.454738Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe (mysqld 9.1.0) starting as process 14032
+2024-11-15T03:32:17.493255Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2024-11-15T03:32:17.908157Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2024-11-15T03:32:18.333366Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2024-11-15T03:32:18.333968Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2024-11-15T03:32:18.397923Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2024-11-15T03:32:18.398091Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: ready for connections. Version: '9.1.0'  socket: ''  port: 3306  MySQL Community Server - GPL.
+2024-11-15T03:38:46.240142Z 0 [System] [MY-013105] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Normal shutdown.
+2024-11-15T03:38:49.087724Z 0 [System] [MY-010910] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Shutdown complete (mysqld 9.1.0)  MySQL Community Server - GPL.
+2024-11-15T03:38:49.088879Z 0 [System] [MY-015016] [Server] MySQL Server - end.
+2024-11-15T03:40:20.440356Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2024-11-15T03:40:20.771895Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe (mysqld 9.1.0) starting as process 7112
+2024-11-15T03:40:20.802305Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2024-11-15T03:40:21.412012Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2024-11-15T03:40:21.873120Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2024-11-15T03:40:21.873913Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2024-11-15T03:40:21.916337Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2024-11-15T03:40:21.916598Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: ready for connections. Version: '9.1.0'  socket: ''  port: 3306  MySQL Community Server - GPL.
+2024-11-15T03:40:45.429951Z 0 [System] [MY-013105] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Normal shutdown.
+2024-11-15T03:40:48.615551Z 0 [System] [MY-010910] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: Shutdown complete (mysqld 9.1.0)  MySQL Community Server - GPL.
+2024-11-15T03:40:48.616522Z 0 [System] [MY-015016] [Server] MySQL Server - end.
+2024-11-15T03:41:23.503535Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2024-11-15T03:41:23.900965Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe (mysqld 9.1.0) starting as process 6452
+2024-11-15T03:41:23.929758Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2024-11-15T03:41:24.677414Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2024-11-15T03:41:25.215909Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2024-11-15T03:41:25.216720Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2024-11-15T03:41:25.276852Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2024-11-15T03:41:25.276899Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: ready for connections. Version: '9.1.0'  socket: ''  port: 3306  MySQL Community Server - GPL.
+2024-11-15T03:51:40.766473Z 12 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
