@@ -14,15 +14,15 @@
         {% for device in devices %}
             <div class="device">
                 <p class="hostname">{{ device.hostname }}</p>
-                {% if device.has_reservation %}
-                    <p class="status reserved">Reserved</p>
+                {% if device.is_reserved %}
+                    <p class="status reserved"></p>
+                    <button class="reserve-btn restricted" disabled>Reserved</button>
                 {% else %}
-                    <a href="{{ url_for('reserve', hostname=device.hostname) }}" class="reserve-btn">Reserve</a>
+                    <a href="{{ url_for('reserve', hostname=device.hostname) }}" class="reserve-btn available">Reserve</a>
                 {% endif %}
             </div>
         {% endfor %}
     </div>
-
 
     <a href="{{ url_for('index') }}">Back to Home</a>
 </body>

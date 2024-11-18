@@ -31,16 +31,34 @@
     color: red;
 }
 
+/* Base button styling */
 .device .reserve-btn {
     display: inline-block;
     margin-top: 10px;
     padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
-    text-decoration: none;
+    border: 1px solid black;
     border-radius: 3px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
 }
 
-.device .reserve-btn:hover {
+/* Available button (default state) */
+.device .reserve-btn.available {
+    background-color: #00FF00;
+    color: white;
+    text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
+}
+
+.device .reserve-btn.available:hover {
     background-color: #45a049;
+}
+
+/* Reserved button (restricted state) */
+.device .reserve-btn.restricted {
+    background-color: #FF0000;
+    color: black;
+    cursor: not-allowed;
+    pointer-events: none; /* Disable interaction */
+    text-shadow: 1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white;
 }
