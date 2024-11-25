@@ -9,7 +9,8 @@
         .messages { color: red; list-style: none; padding: 0; }
         .form-container { max-width: 400px; margin: auto; padding: 1em; border: 1px solid #ccc; border-radius: 5px; }
         .form-container label { display: block; margin-bottom: 0.5em; }
-        .form-container input { width: 100%; padding: 0.5em; margin-bottom: 1em; }
+        .form-container input { width: 100%; max-width: 350px; padding: 0.5em; margin-bottom: 1em; margin: auto; display: block; }
+        .form-container input[type="submit"] { margin-top: 10px; }
         .messages .success { color: green; }
         .messages .error { color: red; }
     </style>
@@ -17,8 +18,6 @@
 <body>
     <div class="form-container">
         <h2>Login to make a reservation.</h2>
-
-
 
         <!-- Login Form -->
         <form method="post" action="{{ url_for('login') }}">

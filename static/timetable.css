@@ -1,0 +1,49 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: 100px repeat(5, 1fr);
+    border: 1px solid #ccc;
+}
+
+.header {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+}
+
+.time {
+    text-align: center;
+    background-color: #fafafa;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+.slot {
+    border: 1px solid #ccc;
+    position: relative;
+    padding: 10px;
+}
+
+.lesson {
+    background-color: #4caf50;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    border-radius: 3px;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+}

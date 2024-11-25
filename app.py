@@ -1,5 +1,5 @@
 from flask import Flask, url_for, request, redirect, render_template, abort, session, flash
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, login_required
 from flask_bcrypt import Bcrypt
 
 from flask_wtf import FlaskForm
@@ -27,6 +27,7 @@ socketio = SocketIO(app, ssl_context='adhoc') #enable SSL, 'adhoc' self signs th
 #Initialise extensions
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 bcrypt = Bcrypt(app)
 
@@ -50,6 +51,7 @@ def load_user(username):
     return User.query.get(username)  # Adjust this if your primary key is not `username`
 
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
@@ -73,7 +75,9 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and bcrypt.check_password_hash(user.password, password):
+            print("correct creds")
             login_user(user)
+            print(login_user(user, remember=True))
             next = request.args.get('next')
             if isSafeRedirect(next):
                 return redirect(next)
@@ -104,26 +108,20 @@ def register():
 
 #Reservation Logic
 @app.route('/room/<string:current_room>')
+@login_required
 def room(current_room):
     # Get all devices in the specified room
     devices = Device.query.filter_by(room=current_room).all()
     return render_template('room.html', current_room=current_room, devices=devices)
 
 @app.route('/reserve/<string:hostname>')
+@login_required
 def reserve(hostname):
     device = Device.query.filter_by(hostname=hostname).first()
-    if device and not device.is_reserved:
-        print("No reservation detected")
-        device.is_reserved = True
-        database.session.commit()  # Commit the reservation change
-        #Implement reservation audit logging
-    elif device and device.is_reserved:
-        print("Reservation detected")
-    else:
-        print("huh")
+
 
     # Redirect back to the room page to update the status
-    return redirect(url_for('room', current_room=device.room))
+    return redirect(url_for('room', current_room=device.room, device=device))
 
 
 

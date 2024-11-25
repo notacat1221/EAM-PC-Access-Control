@@ -45,3 +45,13 @@
 2024-11-15T03:41:25.276852Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
 2024-11-15T03:41:25.276899Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: ready for connections. Version: '9.1.0'  socket: ''  port: 3306  MySQL Community Server - GPL.
 2024-11-15T03:51:40.766473Z 12 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2024-11-20T12:55:57.309680Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2024-11-20T12:55:57.588705Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe (mysqld 9.1.0) starting as process 7240
+2024-11-20T12:55:58.137103Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2024-11-20T12:56:01.116900Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2024-11-20T12:56:01.473972Z 0 [System] [MY-010229] [Server] Starting XA crash recovery...
+2024-11-20T12:56:01.478398Z 0 [System] [MY-010232] [Server] XA crash recovery finished.
+2024-11-20T12:56:01.606186Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2024-11-20T12:56:01.606873Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2024-11-20T12:56:01.648709Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2024-11-20T12:56:01.648766Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 9.1\bin\mysqld.exe: ready for connections. Version: '9.1.0'  socket: ''  port: 3306  MySQL Community Server - GPL.

@@ -1,9 +1,66 @@
-from dbManager import database, Device, User, app  # Ensure correct imports
-from passlib.handlers.sha2_crypt import sha256_crypt
+from dbManager import database, Device, User, Timetable, app  # Ensure correct imports
+from flask_bcrypt import Bcrypt
 from sqlalchemy import text
+import random
+from datetime import datetime, timedelta, time
+bcrypt = Bcrypt(app)
+def populate_timetable():
+    """
+    Populate the timetable table in the database with random lessons.
+    Each room will have four lessons per day (2 one-hour and 2 two-hour lessons).
+    Lessons are randomly scheduled between 8:00 AM and 4:00 PM, avoiding overlaps.
+    """
+    days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    rooms = ['1', '2']
+    lesson_durations = [timedelta(hours=1), timedelta(hours=2)]
+
+    with app.app_context():
+        for room in rooms:
+            for day in days_of_week:
+                lessons = []  # List to track lessons for the day
+
+                while len(lessons) < 4:
+                    start_hour = random.choice(range(9, 16))  # Lessons start between 8 AM and 4 PM
+                    start_minute = random.choice([0, 30])    # Lessons start on the hour or half-hour
+                    start_time = time(start_hour, start_minute)
+
+                    # Select a random lesson duration
+                    duration = random.choice(lesson_durations)
+                    start_datetime = datetime.combine(datetime.today(), start_time)
+                    end_datetime = start_datetime + duration
+                    end_time = end_datetime.time()
+
+                    # Check for overlaps with existing lessons
+                    overlap = False
+                    for lesson in lessons:
+                        if (start_time >= lesson['start_time'] and start_time < lesson['end_time']) or \
+                           (end_time > lesson['start_time'] and end_time <= lesson['end_time']):
+                            overlap = True
+                            break
+
+                    if not overlap:
+                        lessons.append({
+                            'room_number': room,
+                            'day_of_week': day,
+                            'start_time': start_time,
+                            'end_time': end_time
+                        })
+
+                # Insert lessons into the database
+                for lesson in lessons:
+                    new_entry = Timetable(
+                        room_number=lesson['room_number'],
+                        day_of_week=lesson['day_of_week'],
+                        start_time=lesson['start_time'],
+                        end_time=lesson['end_time']
+                    )
+                    database.session.add(new_entry)
+        database.session.commit()
+
+    print("Timetable populated successfully.")
+
 
 def insert_devices():
-    # Prepare a list of devices to insert
     devices = []
     for i in range(1, 6):
         # Devices for Room 1
@@ -34,16 +91,17 @@ def insert_devices():
 def add_users_to_database():
     # Prepare a list of values to insert
     users = []
-    password_hash = sha256_crypt.hash("password")  # Precompute the hash for efficiency
-    for x in "abcd":
-        for i in range(250):  # 250 users for each letter to make 1000 total
-            username = f"{x}{str(i).zfill(7)}"  # Ensures 7 digits after the letter
-            users.append((username, password_hash, "student", False))
+    for x in 'abcd':
+        for i in range(250):
+            username = f"{x}{str(i).zfill(7)}"  # 7 digits after the letter
+            password_hash = bcrypt.generate_password_hash('password').decode('utf-8')
+            print(username, password_hash)
+            users.append((username, password_hash, 'student', False))
 
     # Use raw SQL to insert in bulk
     query = """
-        INSERT INTO users (username, password, usertype, is_reserved)
-        VALUES (:username, :password, :usertype, :is_reserved)
+        INSERT INTO users (username, password, usertype, has_reservation)
+        VALUES (:username, :password, :usertype, :has_reservation)
     """
 
     # Ensure the database operations are within the Flask app context
@@ -51,9 +109,9 @@ def add_users_to_database():
         with database.engine.connect() as connection:
             with connection.begin():  # Begin a transaction
                 # Execute bulk insert
-                connection.execute(text(query), [{"username": username, "password": password_hash, "usertype": "student", "is_reserved": False} for username, password_hash, usertype, is_reserved in users])
+                connection.execute(text(query), [{"username": username, "password": password_hash, "usertype": "student", "has_reservation": False} for username, password_hash, usertype, has_reservation in users])
 
     print("1000 users added successfully.")
 
 # Call the function to add users
-insert_devices()
+populate_timetable()

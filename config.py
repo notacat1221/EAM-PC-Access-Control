@@ -6,6 +6,7 @@ class Config:
     # Sessions Config
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')  # Provide a default for local development
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
+    SESSION_PERMANENT = False
 
     # MySQL Database Config
     SQLALCHEMY_DATABASE_URI = "mysql+pymysql://PyManager:%Pa55w0rd@localhost/MYSQLEAM"

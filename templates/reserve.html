@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room {{ room_number }} Availability</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='timetable.css') }}">
+</head>
+<body>
+    <h1>Room {{ room_number }} Availability</h1>
+    <div class="schedule-grid">
+        <!-- Header Row -->
+        <div class="header">Time</div>
+        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+        <div class="header">{{ day }}</div>
+        {% endfor %}
+
+        <!-- Time Slots -->
+        {% for hour in range(9, 18) %}
+            <div class="time">{{ "%02d:00" % hour }} - {{ "%02d:00" % (hour + 1) }}</div>
+            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+            <div class="slot">
+                {% for lesson in schedule.get(day, []) %}
+                    {% if lesson.start_time <= "%02d:00" % hour and lesson.end_time > "%02d:00" % hour %}
+                        <div class="lesson">Lesson</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</body>
+</html>
