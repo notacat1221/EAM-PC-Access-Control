@@ -20,7 +20,7 @@ def populate_timetable():
                 lessons = []  # List to track lessons for the day
 
                 while len(lessons) < 4:
-                    start_hour = random.choice(range(9, 16))  # Lessons start between 8 AM and 4 PM
+                    start_hour = random.choice(range(9, 16))  # Lessons start between 9 AM and 4 PM
                     start_minute = random.choice([0, 30])    # Lessons start on the hour or half-hour
                     start_time = time(start_hour, start_minute)
 
@@ -33,8 +33,12 @@ def populate_timetable():
                     # Check for overlaps with existing lessons
                     overlap = False
                     for lesson in lessons:
+                        # Check if the new lesson overlaps with any existing lesson
+                        # A lesson overlaps if its start time is during or after an existing lesson's start time
+                        # and its end time is before or after the existing lesson's end time.
                         if (start_time >= lesson['start_time'] and start_time < lesson['end_time']) or \
-                           (end_time > lesson['start_time'] and end_time <= lesson['end_time']):
+                           (end_time > lesson['start_time'] and end_time <= lesson['end_time']) or \
+                           (start_time < lesson['start_time'] and end_time > lesson['start_time']):
                             overlap = True
                             break
 
@@ -58,6 +62,7 @@ def populate_timetable():
         database.session.commit()
 
     print("Timetable populated successfully.")
+
 
 
 def insert_devices():

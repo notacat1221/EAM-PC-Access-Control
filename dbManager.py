@@ -47,8 +47,10 @@ class Device(database.Model):
 
     hostname = database.Column(database.String(20), unique=True, nullable=False, primary_key=True)
     address = database.Column(database.String(15), nullable=False)
-    room = database.Column(database.String(4), database.ForeignKey('rooms.room_number'), nullable=False)
+    room_number = database.Column(database.String(4), database.ForeignKey('rooms.room_number'), nullable=False)
     eam_assigned_student = database.Column(database.String(8), nullable=True)
+
+    room = database.relationship('Room', backref='devices')
 
 class Reservation(database.Model):
     __tablename__ = 'reservations'
@@ -58,6 +60,7 @@ class Reservation(database.Model):
     room_number = database.Column(database.String(4), database.ForeignKey('rooms.room_number'), nullable=False)
     start_time = database.Column(database.Time, nullable=False)
     end_time = database.Column(database.Time, nullable=False)
+    date = database.Column(database.Date, nullable=False)
 
 class AuditLog(database.Model):
     __tablename__ = 'auditlogs'

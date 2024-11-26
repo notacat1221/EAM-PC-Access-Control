@@ -8,24 +8,35 @@
 </head>
 <body>
     <h1>Room {{ room_number }} Availability</h1>
-    <div class="schedule-grid">
+    <div class="timetable-grid">
         <!-- Header Row -->
         <div class="header">Time</div>
         {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-        <div class="header">{{ day }}</div>
+            <div class="header">{{ day }}</div>
         {% endfor %}
 
         <!-- Time Slots -->
-        {% for hour in range(9, 18) %}
-            <div class="time">{{ "%02d:00" % hour }} - {{ "%02d:00" % (hour + 1) }}</div>
+        {% for hour in hours %}
+            <div class="time">{{ hour.strftime('%H:%M') }} - {{ (hour.hour + 1) % 24 }}:00</div>
             {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-            <div class="slot">
-                {% for lesson in schedule.get(day, []) %}
-                    {% if lesson.start_time <= "%02d:00" % hour and lesson.end_time > "%02d:00" % hour %}
-                        <div class="lesson">Lesson</div>
-                    {% endif %}
-                {% endfor %}
-            </div>
+                <div class="slot">
+                    {% for lesson in timetable %}
+                        {% if lesson.day_of_week == day and lesson.start_time <= hour and lesson.end_time > hour %}
+                            <div class="lesson">
+                                Lesson: {{ lesson.id }}<br>
+                                Time: {{ lesson.start_time }} - {{ lesson.end_time }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% for reservation in reservations %}
+                        {% if reservation.room_number == room_number and reservation.start_time <= hour and reservation.end_time > hour and reservation.start_time != reservation.end_time %}
+                            <div class="reservation">
+                                Reservation: {{ reservation.user_id }}<br>
+                                Time: {{ reservation.start_time }} - {{ reservation.end_time }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
             {% endfor %}
         {% endfor %}
     </div>

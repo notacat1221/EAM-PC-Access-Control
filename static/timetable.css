@@ -9,7 +9,7 @@ h1 {
     margin-bottom: 20px;
 }
 
-.schedule-grid {
+.timetable-grid {
     display: grid;
     grid-template-columns: 100px repeat(5, 1fr);
     border: 1px solid #ccc;
@@ -37,13 +37,18 @@ h1 {
 }
 
 .lesson {
-    background-color: #4caf50;
-    color: white;
-    text-align: center;
     padding: 5px;
-    border-radius: 3px;
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    right: 5px;
+    margin: 2px;
+    border: 1px solid black;
+    background-color: green;
+    color: white;
 }
+
+.reservation {
+    padding: 5px;
+    margin: 2px;
+    border: 1px solid black;
+    background-color: red;
+    color: white;
+}
+
