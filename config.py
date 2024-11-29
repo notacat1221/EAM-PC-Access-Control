@@ -5,6 +5,14 @@ from datetime import timedelta
 class Config:
     # Sessions Config
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')  # Provide a default for local development
+
+    WTF_CSRF_ENABLED = True  # Enable CSRF protection
+    WTF_CSRF_SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')
+
+    SESSION_COOKIE_SAMESITE = 'Lax'  # or 'Strict'
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
     SESSION_PERMANENT = False
 

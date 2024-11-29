@@ -5,40 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room {{ room_number }} Availability</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='timetable.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        }
+        .sidebar h2 {
+            margin-top: 0;
+        }
+        .sidebar form {
+            margin-top: 20px;
+        }
+        .sidebar label, .sidebar select, .sidebar button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            color: black;
+        }
+        .main-content {
+            margin-left: 270px; /* Sidebar width + margin */
+            padding: 20px;
+        }
+        .timetable-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* Time + 5 days */
+            gap: 10px;
+        }
+        .header {
+            background-color: #f4f4f4;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .time, .slot {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .reservation {
+            background-color: #ccffcc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Room {{ room_number }} Availability</h1>
-    <div class="timetable-grid">
-        <!-- Header Row -->
-        <div class="header">Time</div>
-        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-            <div class="header">{{ day }}</div>
-        {% endfor %}
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Reserve a PC</h2>
+        <form method="POST" action="{{ url_for('reserve', hostname=hostname) }}">
+            {{ form.hidden_tag() }}
+            <label for="day">Day</label>
+            {{ form.day(class="form-control") }}
+            <label for="time">Time</label>
+            {{ form.time(class="form-control") }}
+            <label for="duration">Duration</label>
+            {{ form.duration(class="form-control") }}
+            <button type="submit">Reserve</button>
+        </form>
+    </div>
 
-        <!-- Time Slots -->
-        {% for hour in hours %}
-            <div class="time">{{ hour.strftime('%H:%M') }} - {{ (hour.hour + 1) % 24 }}:00</div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1>Room {{ room_number }} Availability</h1>
+        <div class="timetable-grid">
+            <!-- Header Row -->
+            <div class="header">Time</div>
             {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-                <div class="slot">
-                    {% for lesson in timetable %}
-                        {% if lesson.day_of_week == day and lesson.start_time <= hour and lesson.end_time > hour %}
-                            <div class="lesson">
-                                Lesson: {{ lesson.id }}<br>
-                                Time: {{ lesson.start_time }} - {{ lesson.end_time }}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                    {% for reservation in reservations %}
-                        {% if reservation.room_number == room_number and reservation.start_time <= hour and reservation.end_time > hour and reservation.start_time != reservation.end_time %}
-                            <div class="reservation">
-                                Reservation: {{ reservation.user_id }}<br>
-                                Time: {{ reservation.start_time }} - {{ reservation.end_time }}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                <div class="header">{{ day }}</div>
             {% endfor %}
-        {% endfor %}
+
+            <!-- Time Slots -->
+            {% for hour in hours %}
+                <div class="time">{{ hour.strftime('%H:%M') }} - {{ (hour.hour + 1) % 24 }}:00</div>
+                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+                    <div class="slot">
+                        {% for lesson in timetable %}
+                            {% if lesson.day_of_week == day and lesson.start_time <= hour and lesson.end_time > hour %}
+                                <div class="lesson">
+                                    Lesson: {{ lesson.id }}<br>
+                                    Time: {{ lesson.start_time }} - {{ lesson.end_time }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% for reservation in reservations %}
+                            {% if reservation.room_number == room_number and reservation.start_time <= hour and reservation.end_time > hour %}
+                                <div class="reservation">
+                                    Reservation: {{ reservation.user_id }}<br>
+                                    Time: {{ reservation.start_time }} - {{ reservation.end_time }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
     </div>
 </body>
 </html>

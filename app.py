@@ -76,8 +76,9 @@ class ReserveForm(FlaskForm):
     ], validators=[DataRequired()])
 
     time = SelectField('Time', choices=[(f'{hour}:00', f'{hour}:00') for hour in range(9, 18)] +
-                       [(f'{hour}:30', f'{hour}:30') for hour in range(9, 18)], validators=[DataRequired()])
-    #MUST ADD END TIME SELECTOR TO ALLOW FOR DIFFERENT RESERVATION LENGTHS
+                        [(f'{hour}:30', f'{hour}:30') for hour in range(9, 18)], validators=[DataRequired()])
+    duration = SelectField('Duration', choices=[(str(minutes), f'{minutes // 60}h {minutes % 60}min')
+                        for minutes in range(30, 241, 30)], validators=[DataRequired()])
     submit = SubmitField('Reserve')
 
 
@@ -129,14 +130,14 @@ def room(current_room):
     room_object = Room.query.filter_by(room_number=current_room).first_or_404()
     return render_template('room.html', room=room_object, devices=devices)
 
-@app.route('/reserve/<string:hostname>')
+@app.route('/reserve/<string:hostname>', methods=['POST', 'GET'])
 @login_required
 def reserve(hostname):
     #Retrieve designated device and the room_object so that we can see if the room is EAM or lesson ongoing
     device = Device.query.filter_by(hostname=hostname).first()
     room_object = Room.query.filter_by(room_number=device.room_number).first_or_404()
 
-    if not device or room_object:
+    if not device or not room_object:
         return "Device/Room not found", 404
 
     #Query timetable to see if room is reserved by a lesson
@@ -145,14 +146,13 @@ def reserve(hostname):
     reservations = Reservation.query.filter_by(hostname=device.hostname).all()
     #Generate time objects for open hours
     hours = [time(hour) for hour in range(9, 18)]
-
     form = ReserveForm()
     if form.validate_on_submit():
+        print(f"Form Data: {form.data}")
         time_selected = form.time.data #HH:MM
         day_selected = form.day.data
-
+        duration_selected = int(form.duration.data)
         hour, minute = map(int, time_selected.split(':'))
-        datetime_selected = datetime.combine()
 
         #Calulate date of reservation from weekday
         today = datetime.today()
@@ -165,23 +165,47 @@ def reserve(hostname):
         date_selected = today + timedelta(days=days_ahead) #Calculate date on selected day
         datetime_selected = datetime.combine(date_selected, time(hour, minute))
 
+        #Calculate reservation end time to see if it overlaps
+        end_datetime = datetime_selected + timedelta(minutes=duration_selected)
+
+        #Query timetable for lessons and reservations scheduled on desired day
+        lessons_for_day = Timetable.query.filter(
+            Timetable.room_number == device.room_number,
+            Timetable.day_of_week == date_selected.strftime('%A')
+        ).all()
+
+        reservations_for_day = Reservation.query.filter(
+            Reservation.hostname == device.hostname,
+            Reservation.date == date_selected
+        )
+        #Check results for the room and device to ensure it is available at the requested time
+        for lesson in lessons_for_day:
+            if lesson.start_time < end_datetime.time() and lesson.end_time > datetime_selected.time():
+                flash("Reservation overlaps with a scheduled lesson", "warning")
+                return redirect(url_for('reserve', hostname=hostname))
+        for reservation in reservations_for_day:
+            if reservation.start_time < end_datetime and reservation.end_time > datetime_selected:
+                flash("Reservation overlaps with another student's reservation", "warning")
+
+
         attempt_reservation = Reservation(
+            user_id=current_user.username,
             hostname=device.hostname,
-            username=current_user.username,
             room_number=device.room_number,
             start_time=datetime_selected,
-            end_time=datetime_selected, #MUST UPDATE
+            end_time=end_datetime,
             date=date_selected.date()
-
         )
-    return render_template('reserve.html', room=room_object, hostname=hostname, timetable=timetable, hours=hours, reservations=reservations)
+        database.session.add(attempt_reservation)
+        database.session.commit()
+
+        flash('Reservation successful!', 'success')
+        return redirect(url_for('room', current_room=device.room_number))
+    else:
+        print("Form invalid", form.errors)
+    return render_template('reserve.html', room=room_object, hostname=hostname, timetable=timetable, hours=hours, reservations=reservations, form=form)
 
 
-
-@app.after_request
-def set_secure_cookie(response):
-    response.set_cookie('session', secure = True, httponly=True) #Prevents clientside scripts from accessing cookie
-    return response
 
 if __name__ == "__main__":
     tablesCheck()
