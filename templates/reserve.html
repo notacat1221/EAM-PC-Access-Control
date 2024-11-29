@@ -4,37 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room {{ room_number }} Availability</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='timetable.css') }}">
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100%;
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-        }
-        .sidebar h2 {
-            margin-top: 0;
-        }
-        .sidebar form {
-            margin-top: 20px;
-        }
-        .sidebar label, .sidebar select, .sidebar button {
-            display: block;
-            width: 100%;
-            margin-bottom: 10px;
-            color: black;
-        }
         .main-content {
-            margin-left: 270px; /* Sidebar width + margin */
+            margin-left: 270px; /* Adjust to match sidebar width from styles.css */
             padding: 20px;
         }
         .timetable-grid {
@@ -53,64 +27,99 @@
             padding: 10px;
             text-align: center;
         }
-        .reservation {
-            background-color: #ccffcc;
-            padding: 5px;
-            border-radius: 5px;
-        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2>Reserve a PC</h2>
-        <form method="POST" action="{{ url_for('reserve', hostname=hostname) }}">
-            {{ form.hidden_tag() }}
-            <label for="day">Day</label>
-            {{ form.day(class="form-control") }}
-            <label for="time">Time</label>
-            {{ form.time(class="form-control") }}
-            <label for="duration">Duration</label>
-            {{ form.duration(class="form-control") }}
-            <button type="submit">Reserve</button>
-        </form>
-    </div>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>Reserve a PC</h2>
+            <form method="POST" action="{{ url_for('reserve', hostname=hostname) }}">
+                {{ form.hidden_tag() }}
+                <label for="day">Day</label>
+                {{ form.day(class="form-control") }}
+                <label for="time">Time</label>
+                {{ form.time(class="form-control") }}
+                <label for="duration">Duration</label>
+                {{ form.duration(class="form-control") }}
+                <button type="submit">Reserve</button>
+            </form>
+        </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <h1>Room {{ room_number }} Availability</h1>
-        <div class="timetable-grid">
-            <!-- Header Row -->
-            <div class="header">Time</div>
-            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-                <div class="header">{{ day }}</div>
-            {% endfor %}
-
-            <!-- Time Slots -->
-            {% for hour in hours %}
-                <div class="time">{{ hour.strftime('%H:%M') }} - {{ (hour.hour + 1) % 24 }}:00</div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <h1>Room {{ room_number }} Availability</h1>
+            <div class="timetable-grid">
+                <!-- Header Row -->
+                <div class="header">Time</div>
                 {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-                    <div class="slot">
-                        {% for lesson in timetable %}
-                            {% if lesson.day_of_week == day and lesson.start_time <= hour and lesson.end_time > hour %}
-                                <div class="lesson">
-                                    Lesson: {{ lesson.id }}<br>
-                                    Time: {{ lesson.start_time }} - {{ lesson.end_time }}
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                        {% for reservation in reservations %}
-                            {% if reservation.room_number == room_number and reservation.start_time <= hour and reservation.end_time > hour %}
-                                <div class="reservation">
-                                    Reservation: {{ reservation.user_id }}<br>
-                                    Time: {{ reservation.start_time }} - {{ reservation.end_time }}
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                    <div class="header">{{ day }}</div>
                 {% endfor %}
-            {% endfor %}
+
+                <!-- Time Slots -->
+                {% for hour in hours %}
+                    <div class="time">{{ hour.strftime('%H:%M') }} - {{ (hour.hour + 1) % 24 }}:00</div>
+                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+                        <div class="slot">
+                            <!-- Check for lessons -->
+                            {% for lesson in timetable %}
+                                {% if lesson.day_of_week == day and lesson.start_time <= hour and lesson.end_time > hour %}
+                                    <div class="lesson">
+                                        <strong>Lesson</strong><br>
+                                        Time: {{ lesson.start_time.strftime('%H:%M') }} - {{ lesson.end_time.strftime('%H:%M') }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
+                            <!-- Check for reservations -->
+                            {% for reservation in reservations %}
+                                {% if reservation.date.strftime('%A') == day and reservation.start_time <= hour and reservation.end_time > hour %}
+                                    <div class="reservation">
+                                        <strong>Reserved</strong><br>
+                                        Time: {{ reservation.start_time.strftime('%H:%M') }} - {{ reservation.end_time.strftime('%H:%M') }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
+
+    <!-- Popup Messages -->
+    <div class="flash-popup">
+        <div class="flash-popup-content">
+            <p class="flash-message"></p>
+            <button class="close-btn">&times;</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function showPopup(message, type) {
+            const popup = document.querySelector('.flash-popup');
+            const popupContent = document.querySelector('.flash-popup-content');
+            const messageElement = document.querySelector('.flash-message');
+            const closeButton = document.querySelector('.close-btn');
+
+            popup.style.display = 'flex'; // Show the popup overlay
+            popupContent.classList.add(type); // Add the type (success, warning, danger) class
+            messageElement.textContent = message; // Set the message text
+
+            // Optional: Hide the popup when clicking the close button
+            closeButton.onclick = function() {
+                popup.style.display = 'none';
+            };
+        }
+
+        window.onload = function() {
+            const flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
+            console.log(flashMessages);
+            if (flashMessages.length > 0) {
+                const message = flashMessages[0][1]; // Get the message text
+                const type = flashMessages[0][0]; // Get the category (success, warning, danger)
+                showPopup(message, type); // Display the popup
+            }
+        };
+    </script>
 </body>
 </html>

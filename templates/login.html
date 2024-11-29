@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body { font-family: Arial, sans-serif; }
         .messages { color: red; list-style: none; padding: 0; }
@@ -30,5 +31,39 @@
             <input type="submit" value="Login">
         </form>
     </div>
+    <!-- Popup Messages -->
+    <div class="flash-popup">
+        <div class="flash-popup-content">
+            <p class="flash-message"></p>
+            <button class="close-btn">&times;</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function showPopup(message, type) {
+            const popup = document.querySelector('.flash-popup');
+            const popupContent = document.querySelector('.flash-popup-content');
+            const messageElement = document.querySelector('.flash-message');
+            const closeButton = document.querySelector('.close-btn');
+
+            popup.style.display = 'flex'; // Show the popup overlay
+            popupContent.classList.add(type); // Add the type (success, warning, danger) class
+            messageElement.textContent = message; // Set the message text
+
+            // Optional: Hide the popup when clicking the close button
+            closeButton.onclick = function() {
+                popup.style.display = 'none';
+            };
+        }
+
+        window.onload = function() {
+            const flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
+            console.log(flashMessages);
+            if (flashMessages.length > 0) {
+                const message = flashMessages[0][1]; // Get the message text
+                const type = flashMessages[0][0]; // Get the category (success, warning, danger)
+                showPopup(message, type); // Display the popup
+            }
+        };
+    </script>
 </body>
 </html>

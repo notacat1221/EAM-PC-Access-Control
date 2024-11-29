@@ -40,7 +40,7 @@ h1 {
     padding: 5px;
     margin: 2px;
     border: 1px solid black;
-    background-color: green;
+    background-color: #AC145A;
     color: white;
 }
 
@@ -48,7 +48,7 @@ h1 {
     padding: 5px;
     margin: 2px;
     border: 1px solid black;
-    background-color: red;
+    background-color: #E31C79;
     color: white;
 }
 

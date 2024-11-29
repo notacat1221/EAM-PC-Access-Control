@@ -75,11 +75,17 @@ class ReserveForm(FlaskForm):
         ('Friday', 'Friday')
     ], validators=[DataRequired()])
 
-    time = SelectField('Time', choices=[(f'{hour}:00', f'{hour}:00') for hour in range(9, 18)] +
-                        [(f'{hour}:30', f'{hour}:30') for hour in range(9, 18)], validators=[DataRequired()])
+    time = SelectField('Time', choices=[
+        (f'{hour:02}:00', f'{hour:02}:00') for hour in range(9, 18)
+    ] + [
+        (f'{hour:02}:30', f'{hour:02}:30') for hour in range(9, 18)
+    ], validators=[DataRequired()])
+
     duration = SelectField('Duration', choices=[(str(minutes), f'{minutes // 60}h {minutes % 60}min')
                         for minutes in range(30, 241, 30)], validators=[DataRequired()])
     submit = SubmitField('Reserve')
+
+
 
 
 @app.route('/login', methods = ['GET', 'POST'])
@@ -99,13 +105,14 @@ def login():
             else: #Return to index page if not safe url
                 return redirect(url_for('index'))
         else:
-            flash("Credentials incorrect")
+            flash("Credentials incorrect", "warning")
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.clear()  # Clear the session
-    return redirect(url_for('index'))
+    session.clear()
+    flash('Logged out successfully', 'success')
+    return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -128,7 +135,10 @@ def room(current_room):
     # Get all devices in the specified room
     devices = Device.query.filter(Device.room_number == current_room).all()
     room_object = Room.query.filter_by(room_number=current_room).first_or_404()
-    return render_template('room.html', room=room_object, devices=devices)
+    current_room = "Room " + current_room
+    return render_template('room.html', room=room_object, devices=devices, current_room=current_room)
+
+
 
 @app.route('/reserve/<string:hostname>', methods=['POST', 'GET'])
 @login_required
@@ -148,7 +158,12 @@ def reserve(hostname):
     hours = [time(hour) for hour in range(9, 18)]
     form = ReserveForm()
     if form.validate_on_submit():
-        print(f"Form Data: {form.data}")
+        # Check if student has prior reservation, only 1 reservation allowed at a time
+        existing_reservation = Reservation.query.filter_by(user_id=current_user.username).first()
+        if existing_reservation:
+            flash("You already have an active reservation. Cancel your current reservation to make a new one.","warning")
+            return redirect(url_for('room', current_room=Device.query.filter_by(hostname=hostname).first().room_number))
+
         time_selected = form.time.data #HH:MM
         day_selected = form.day.data
         duration_selected = int(form.duration.data)
