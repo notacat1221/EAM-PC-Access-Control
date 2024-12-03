@@ -97,16 +97,16 @@ def add_users_to_database():
     # Prepare a list of values to insert
     users = []
     for x in 'abcd':
-        for i in range(250):
+        for i in range(50):
             username = f"{x}{str(i).zfill(7)}"  # 7 digits after the letter
             password_hash = bcrypt.generate_password_hash('password').decode('utf-8')
             print(username, password_hash)
-            users.append((username, password_hash, 'student', False))
+            users.append((username, password_hash, 'student', False, False))
 
     # Use raw SQL to insert in bulk
     query = """
-        INSERT INTO users (username, password, usertype, has_reservation)
-        VALUES (:username, :password, :usertype, :has_reservation)
+        INSERT INTO users (username, password, usertype, has_reservation, eam_enrolled)
+        VALUES (:username, :password, :usertype, :has_reservation, :eam_enrolled)
     """
 
     # Ensure the database operations are within the Flask app context
@@ -114,9 +114,9 @@ def add_users_to_database():
         with database.engine.connect() as connection:
             with connection.begin():  # Begin a transaction
                 # Execute bulk insert
-                connection.execute(text(query), [{"username": username, "password": password_hash, "usertype": "student", "has_reservation": False} for username, password_hash, usertype, has_reservation in users])
+                connection.execute(text(query), [{"username": username, "password": password_hash, "usertype": usertype, "has_reservation": has_reservation, "eam_enrolled": eam_enrolled} for username, password_hash, usertype, has_reservation, eam_enrolled in users])
 
     print("1000 users added successfully.")
 
 # Call the function to add users
-populate_timetable()
+add_users_to_database()

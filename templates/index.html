@@ -8,12 +8,26 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Choose a Room</h1>
-    <ul>
-        <li><a href="{{ url_for('room', current_room='1') }}">Room 1</a></li>
-        <li><a href="{{ url_for('room', current_room='2') }}">Room 2</a></li>
-        <!-- Add more rooms as needed -->
-    </ul>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Choose a Room</h2>
+        <ul>
+            {% for room in rooms %}
+                <li><a href="{{ url_for('room', current_room=room.room_number) }}">Room {{ room.room_number }}{% if room.eam_room %} (EAM){% endif %}</a></li>
+            {% endfor %}
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1>Choose a Room</h1>
+        <ul>
+            <li><a href="{{ url_for('room', current_room='1') }}">Room 1</a></li>
+            <li><a href="{{ url_for('room', current_room='2') }}">Room 2</a></li>
+            <!-- Add more rooms as needed -->
+        </ul>
+    </div>
 
     <!-- Popup Messages -->
     <div class="flash-popup">
@@ -22,6 +36,7 @@
             <button class="close-btn">&times;</button>
         </div>
     </div>
+
     <script type="text/javascript">
         function showPopup(message, type) {
             const popup = document.querySelector('.flash-popup');

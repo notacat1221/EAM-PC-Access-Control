@@ -52,7 +52,8 @@ def load_user(username):
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    rooms = Room.query.all()
+    return render_template('index.html', rooms=rooms)
 
 #FlaskForms
 class LoginForm(FlaskForm):
@@ -135,6 +136,10 @@ def room(current_room):
     # Get all devices in the specified room
     devices = Device.query.filter(Device.room_number == current_room).all()
     room_object = Room.query.filter_by(room_number=current_room).first_or_404()
+
+    #Alert user to room's EAM status
+    if room_object.eam_room:
+        flash("Warning: This is an EAM lab. Your reservation may be reallocated if an EAM student requires your selected device.", "warning")
     current_room = "Room " + current_room
     return render_template('room.html', room=room_object, devices=devices, current_room=current_room)
 

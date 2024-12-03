@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, inspect
+from sqlalchemy import inspect
+
 app = Flask(__name__)
 app.config.from_object('config.Config')
 database = SQLAlchemy()
@@ -10,7 +11,16 @@ def init_app(app):
     database.init_app(app)
 
 def tablesCheck():
-    # Creates each table one by one in the database
+    # Required fields for each table
+    required_fields = {
+        'users': ['username', 'usertype', 'password', 'has_reservation', 'eam_enrolled'],
+        'devices': ['hostname', 'address', 'room_number', 'eam_assigned_student'],
+        'reservations': ['user_id', 'hostname', 'room_number', 'start_time', 'end_time', 'date'],
+        'auditlogs': ['user_id', 'device_id', 'caution_level'],
+        'rooms': ['room_number', 'eam_room'],
+        'timetable': ['id', 'room_number', 'day_of_week', 'start_time', 'end_time']
+    }
+
     with app.app_context():
         inspector = inspect(database.engine)  # Get the inspector for the engine
         for table in [User.__table__, Device.__table__, Reservation.__table__, AuditLog.__table__, Room.__table__, Timetable.__table__]:
@@ -19,8 +29,14 @@ def tablesCheck():
                 print(f"Table '{table.name}' created successfully.")
             else:
                 print(f"Table '{table.name}' already exists.")
-
-
+                # Check if all required fields are present
+                columns = inspector.get_columns(table.name)
+                column_names = [col['name'] for col in columns]
+                missing_fields = [field for field in required_fields[table.name] if field not in column_names]
+                if missing_fields:
+                    print(f"Table '{table.name}' is missing fields: {', '.join(missing_fields)}.")
+                else:
+                    print(f"Table '{table.name}' has all required fields.")
 
 class User(database.Model):
     __tablename__ = 'users'
@@ -31,7 +47,6 @@ class User(database.Model):
     has_reservation = database.Column(database.Boolean, nullable=False)
     eam_enrolled = database.Column(database.Boolean, nullable=False)
 
-    # Required methods for flask-login
     def is_active(self):
         return True
     def get_id(self):
@@ -40,7 +55,6 @@ class User(database.Model):
         return True
     def is_anonymous(self):
         return False
-
 
 class Device(database.Model):
     __tablename__ = 'devices'
@@ -83,7 +97,4 @@ class Timetable(database.Model):
     day_of_week = database.Column(database.String(9), nullable=False)  # e.g., "Monday", "Tuesday"
     start_time = database.Column(database.Time, nullable=False)
     end_time = database.Column(database.Time, nullable=False)
-
-
-
 
