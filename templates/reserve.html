@@ -27,6 +27,19 @@
             padding: 10px;
             text-align: center;
         }
+        .cancel-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .cancel-btn:hover {
+            background-color: darkred;
+        }
     </style>
 </head>
 <body>
@@ -86,6 +99,13 @@
             </div>
         </div>
     </div>
+
+    <!-- Cancel Reservation Button -->
+    {% if current_user.username == existing_reservation.user_id %}
+        <form method="POST" action="{{ url_for('cancel_reservation', user_id=current_user.username) }}">
+            <button type="submit" class="cancel-btn">Cancel Reservation</button>
+        </form>
+    {% endif %}
 
     <!-- Popup Messages -->
     <div class="flash-popup">

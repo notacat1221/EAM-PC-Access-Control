@@ -143,6 +143,22 @@ def room(current_room):
     current_room = "Room " + current_room
     return render_template('room.html', room=room_object, devices=devices, current_room=current_room)
 
+from datetime import datetime, timedelta, time
+
+def is_reservation_conflict(hostname, date_selected, time_selected, duration_minutes):
+    # Parse time_selected into a datetime object
+    hour, minute = map(int, time_selected.split(':'))
+    start_datetime = datetime.combine(date_selected, time(hour, minute))
+    end_datetime = start_datetime + timedelta(minutes=duration_minutes)
+
+    # Query the database for overlapping reservations
+    conflicting_reservation = Reservation.query.filter(
+        Reservation.hostname == hostname,
+        Reservation.date == date_selected,
+        (Reservation.start_time < end_datetime) & (Reservation.end_time > start_datetime)
+    ).first()
+
+    return conflicting_reservation is not None
 
 
 @app.route('/reserve/<string:hostname>', methods=['POST', 'GET'])
@@ -162,13 +178,16 @@ def reserve(hostname):
     #Generate time objects for open hours
     hours = [time(hour) for hour in range(9, 18)]
     form = ReserveForm()
+    #Check for conflicts with existing reservations
+    existing_reservation = Reservation.query.filter_by(user_id=current_user.username).first()
     if form.validate_on_submit():
         # Check if student has prior reservation, only 1 reservation allowed at a time
-        existing_reservation = Reservation.query.filter_by(user_id=current_user.username).first()
         if existing_reservation:
             flash("You already have an active reservation. Cancel your current reservation to make a new one.","warning")
             return redirect(url_for('room', current_room=Device.query.filter_by(hostname=hostname).first().room_number))
 
+
+        #Retrieve reservation parameters from forms input
         time_selected = form.time.data #HH:MM
         day_selected = form.day.data
         duration_selected = int(form.duration.data)
@@ -185,7 +204,7 @@ def reserve(hostname):
         date_selected = today + timedelta(days=days_ahead) #Calculate date on selected day
         datetime_selected = datetime.combine(date_selected, time(hour, minute))
 
-        #Calculate reservation end time to see if it overlaps
+        #Calculate reservation end time to see if it overlaps with pre-scheduled lessons
         end_datetime = datetime_selected + timedelta(minutes=duration_selected)
 
         #Query timetable for lessons and reservations scheduled on desired day
@@ -204,8 +223,13 @@ def reserve(hostname):
                 flash("Reservation overlaps with a scheduled lesson", "warning")
                 return redirect(url_for('reserve', hostname=hostname))
         for reservation in reservations_for_day:
-            if reservation.start_time < end_datetime and reservation.end_time > datetime_selected:
+            if reservation.start_time < end_datetime.time() and reservation.end_time > datetime_selected.time():
                 flash("Reservation overlaps with another student's reservation", "warning")
+                return redirect(url_for('reserve', hostname=hostname))
+        #Check if overlaps with existing reservations made by other students
+        if is_reservation_conflict(hostname, date_selected, time_selected, duration_selected):
+            flash("Reservation conflict, please select another device or timeframe", "warning")
+
 
 
         attempt_reservation = Reservation(
@@ -223,8 +247,18 @@ def reserve(hostname):
         return redirect(url_for('room', current_room=device.room_number))
     else:
         print("Form invalid", form.errors)
-    return render_template('reserve.html', room=room_object, hostname=hostname, timetable=timetable, hours=hours, reservations=reservations, form=form)
+    return render_template('reserve.html', room=room_object, hostname=hostname, timetable=timetable, hours=hours, reservations=reservations, form=form, existing_reservation=existing_reservation)
 
+@app.route('/cancel_reservation/<string:user_id>', methods=['POST'])
+def cancel_reservation(user_id):
+    reservation = Reservation.query.filter_by(user_id=user_id).first_or_404()
+    if reservation and reservation.user_id == current_user.username:
+        database.session.delete(reservation)
+        database.session.commit()
+        flash('Reservation cancelled!', 'success')
+    else:
+        flash('Reservation not found or insufficient permissions', 'warning')
+    return redirect(url_for('index'))
 
 
 if __name__ == "__main__":

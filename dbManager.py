@@ -70,11 +70,13 @@ class Reservation(database.Model):
     __tablename__ = 'reservations'
 
     user_id = database.Column(database.String(8), database.ForeignKey('users.username'), primary_key=True)
-    hostname = database.Column(database.String(20), unique=True, nullable=False, primary_key=True)
+    hostname = database.Column(database.String(20)  , nullable=False)
     room_number = database.Column(database.String(4), database.ForeignKey('rooms.room_number'), nullable=False)
     start_time = database.Column(database.Time, nullable=False)
     end_time = database.Column(database.Time, nullable=False)
     date = database.Column(database.Date, nullable=False)
+
+    __table_args__ = (database.UniqueConstraint('user_id', 'hostname', name='uid_hostname_constraint'),)
 
 class AuditLog(database.Model):
     __tablename__ = 'auditlogs'
