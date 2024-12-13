@@ -83,7 +83,9 @@ class AuditLog(database.Model):
 
     user_id = database.Column(database.String(8), database.ForeignKey('users.username'), primary_key=True)
     device_id = database.Column(database.String(20), database.ForeignKey('devices.hostname'), primary_key=True)
-    caution_level = database.Column(database.String(20), nullable=False)
+    action = database.Column(database.String(20), nullable=False)
+    description = database.Column(database.String(255), nullable=False)
+    timestamp = database.Column(database.DateTime, nullable=False)
 
 class Room(database.Model):
     __tablename__ = 'rooms'
