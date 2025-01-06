@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import inspect
+from sqlalchemy import inspect, func
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -16,7 +16,7 @@ def tablesCheck():
         'users': ['username', 'usertype', 'password', 'has_reservation', 'eam_enrolled'],
         'devices': ['hostname', 'address', 'room_number', 'eam_assigned_student'],
         'reservations': ['user_id', 'hostname', 'room_number', 'start_time', 'end_time', 'date'],
-        'auditlogs': ['user_id', 'device_id', 'caution_level'],
+        'auditlogs': ['user_id', 'device_id', 'action', 'description', 'timestamp'],
         'rooms': ['room_number', 'eam_room'],
         'timetable': ['id', 'room_number', 'day_of_week', 'start_time', 'end_time']
     }
@@ -81,8 +81,9 @@ class Reservation(database.Model):
 class AuditLog(database.Model):
     __tablename__ = 'auditlogs'
 
-    user_id = database.Column(database.String(8), database.ForeignKey('users.username'), primary_key=True)
-    device_id = database.Column(database.String(20), database.ForeignKey('devices.hostname'), primary_key=True)
+    id = database.Column(database.Integer, primary_key=True)
+    user_id = database.Column(database.String(8), database.ForeignKey('users.username'), nullable=True)
+    device_id = database.Column(database.String(20), database.ForeignKey('devices.hostname'), nullable=True)
     action = database.Column(database.String(20), nullable=False)
     description = database.Column(database.String(255), nullable=False)
     timestamp = database.Column(database.DateTime, nullable=False)

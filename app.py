@@ -53,6 +53,7 @@ def load_user(username):
 @login_required
 def index():
     rooms = Room.query.all()
+    clear_expired_reservations()
     return render_template('index.html', rooms=rooms)
 
 #FlaskForms
@@ -218,6 +219,8 @@ def reserve(hostname):
         database.session.add(attempt_reservation)
         database.session.commit()
 
+        #ADD SHIT HERE
+
         log_event(current_user.username, device.hostname, "Reservation", ("User " + current_user.username + " attempted to reserve " + device.hostname + ", successfully"))
         flash('Reservation successful!', 'success')
         return redirect(url_for('index'))
@@ -239,8 +242,26 @@ def cancel_reservation(user_id):
         log_event(current_user.username, reservation.hostname, "Cancellation", ("User " + current_user.username + " attempted to cancel reservation on " + reservation.hostname + ", unsuccessfully"))
     return redirect(url_for('index'))
 
+def clear_expired_reservations():
+    now = datetime.now()
+    today = now.date()
+    existing_reservation = Reservation.query.filter_by(user_id=current_user.username).first()
+    # Combine date and end_time to create a datetime object for comparison
+    expired_reservations = Reservation.query.filter((Reservation.date <= today) & (Reservation.end_time < now))
+
+    # Loop through expired reservations and delete them
+    for reservation in expired_reservations:
+        log_event(reservation.user_id, reservation.hostname, "Expired Reservation", ("Reservation made by " + reservation.user_id + " on device " + reservation.hostname + " has expired"))
+        database.session.delete(reservation)
+
+    # Commit changes to the database
+    database.session.commit()
 
 def log_event(user_id, device_id, action, description):
+    if not user_id:
+        user_id = None
+    if not device_id:
+        device_id = None
     new_log = AuditLog(
         user_id=user_id,
         device_id=device_id,
