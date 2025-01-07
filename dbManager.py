@@ -103,3 +103,10 @@ class Timetable(database.Model):
     start_time = database.Column(database.Time, nullable=False)
     end_time = database.Column(database.Time, nullable=False)
 
+class Credential(database.Model):
+    __tablename__ = 'pendingcredentials'
+    id = database.Column(database.Integer, primary_key=True)
+    username = database.Column(database.String(8), database.ForeignKey('users.username'), nullable=False)
+    password = database.Column(database.String(40), nullable=False)
+    hostname = database.Column(database.String(20), database.ForeignKey('devices.hostname'), nullable=False)
+    address = database.Column(database.String(15), database.ForeignKey('devices.address'), nullable=False)

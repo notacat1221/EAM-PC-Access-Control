@@ -5,6 +5,7 @@ from datetime import timedelta
 class Config:
     # Sessions Config
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')  # Provide a default for local development
+    AD_KEY = os.environ.get('AD_KEY', 'default_ad_key')
 
     WTF_CSRF_ENABLED = True  # Enable CSRF protection
     WTF_CSRF_SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')

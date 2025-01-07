@@ -1,8 +1,14 @@
-from flask import Flask, url_for, request, redirect, render_template, abort, session, flash
+from flask import Flask, url_for, request, redirect, render_template, abort, session, flash, jsonify
 from flask_login import LoginManager, login_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import serialization
+
 from flask_wtf import FlaskForm
+from pip._internal.network.auth import Credentials
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 
@@ -13,7 +19,7 @@ from datetime import time, datetime, timedelta
 
 from config import Config
 from dbManager import database, tablesCheck
-from dbManager import init_app, Device, User, Reservation, AuditLog, Room, Timetable
+from dbManager import init_app, Device, User, Reservation, AuditLog, Room, Timetable, Credential
 app = Flask(__name__)
 app.config.from_object(Config) #Fetch Config class and apply
 app.debug = True
@@ -21,7 +27,7 @@ init_app(app)
 
 
 socketio = SocketIO(app, ssl_context='adhoc') #enable SSL, 'adhoc' self signs the certificate, DEV ONLY
-
+AD_KEY = app.config['AD_KEY']
 
 #Initialise extensions
 login_manager = LoginManager()
@@ -219,8 +225,6 @@ def reserve(hostname):
         database.session.add(attempt_reservation)
         database.session.commit()
 
-        #ADD SHIT HERE
-
         log_event(current_user.username, device.hostname, "Reservation", ("User " + current_user.username + " attempted to reserve " + device.hostname + ", successfully"))
         flash('Reservation successful!', 'success')
         return redirect(url_for('index'))
@@ -256,6 +260,39 @@ def clear_expired_reservations():
 
     # Commit changes to the database
     database.session.commit()
+
+@app.route('/log_reservation', methods=['POST'])
+def log_reservation():
+    credentials = request.json
+    username = credentials['username']
+    password = credentials['password']
+
+    if not username or not password: #Validate input
+        return jsonify({'message': 'Username AND Password are required.'}), 400
+    hashed = User.query.filter_by(username=current_user.username).first().password
+    if bcrypt.check_password_hash(hashed, password):
+        # Encrypting data with the AD server public key
+        encrypted_pass = AD_KEY.encrypt(
+            password,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        reservation = Reservation.query.filter_by(username=username).first()
+        if reservation:
+            hostname = reservation.hostname
+        device = Device.query.filter_by(hostname=hostname).first()
+        if device:
+            address = device.address
+        ConnectionInfo = Credential(
+            username=username,
+            password=encrypted_pass,
+            hostname=hostname,
+            address=address
+        )
+
 
 def log_event(user_id, device_id, action, description):
     if not user_id:

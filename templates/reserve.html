@@ -121,6 +121,9 @@
             const messageElement = document.querySelector('.flash-message');
             const closeButton = document.querySelector('.close-btn');
 
+            popupContent.innerHTML = ''
+            popupContent.appendChild(closeButton)
+
             popup.style.display = 'flex'; // Show the popup overlay
             popupContent.classList.add(type); // Add the type (success, warning, danger) class
             messageElement.textContent = ''; // Set the message text blank
@@ -133,7 +136,7 @@
             if (type == 'form') {
                 const form = document.createElement('form')
                 form.method = 'POST';
-                form.action = '/reserve';
+                form.action = '/log_reservation';
 
                 //Add fields
                 const usernameField = document.createElement('input');
@@ -157,11 +160,42 @@
                 form.appendChild(submitButton)
 
                 popupContent.appendChild(form);
+                form.onsubmit = function (e) {e.preventDefault(); handlePopupSubmission(new FormData(form))};
             }
             else {
                 messageElement.textContent = message
                 popupContent.appendChild(messageElement)
             }
+            return false
+        }
+        function handlePopupSubmission(formData) {
+            const data = Object.fromEntries(formData.entries()); // Convert FormData to JSON object
+
+            // Send form data to the Flask backend
+            fetch('/log_reservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data), // Convert data to JSON string
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); // Parse JSON response
+                    } else {
+                        throw new Error('Failed to submit the form.');
+                    }
+                })
+                .then(result => {
+                    console.log('Form submission successful:', result.message);
+                    alert(result.message); // Show success message
+                    document.querySelector('.flash-popup').style.display = 'none'; // Close popup
+                })
+                //Error handling
+                .catch(error => {
+                    console.error('Error:', error.message);
+                    alert('Error: ' + error.message); // Show error message
+                });
         }
 
         window.onload = function() {
