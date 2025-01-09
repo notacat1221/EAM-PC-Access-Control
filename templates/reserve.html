@@ -47,7 +47,7 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <h2>Reserve a PC</h2>
-            <form method="POST" action="{{ url_for('reserve', hostname=hostname) }}" onsubmit="showPopup('Please confirm credentials', 'form'); return false;">
+            <form method="POST" action="{{ url_for('reserve', hostname=hostname) }}">
                 {{ form.hidden_tag() }}
                 <label for="day">Day</label>
                 {{ form.day(class="form-control") }}
@@ -121,81 +121,14 @@
             const messageElement = document.querySelector('.flash-message');
             const closeButton = document.querySelector('.close-btn');
 
-            popupContent.innerHTML = ''
-            popupContent.appendChild(closeButton)
-
             popup.style.display = 'flex'; // Show the popup overlay
             popupContent.classList.add(type); // Add the type (success, warning, danger) class
-            messageElement.textContent = ''; // Set the message text blank
+            messageElement.textContent = message; // Set the message text
 
-            // Hide the popup when clicking the close button
+            // Optional: Hide the popup when clicking the close button
             closeButton.onclick = function() {
                 popup.style.display = 'none';
             };
-            // Construct forms-popup for credential validation, if popup is type form, append input fields to popup
-            if (type == 'form') {
-                const form = document.createElement('form')
-                form.method = 'POST';
-                form.action = '/log_reservation';
-
-                //Add fields
-                const usernameField = document.createElement('input');
-                    usernameField.type = 'text';
-                    usernameField.name = 'username';
-                    usernameField.placeholder = 'Username';
-                    usernameField.required = true;
-
-                const passwordField = document.createElement('input');
-                    passwordField.type = 'password'
-                    passwordField.name = 'password'
-                    passwordField.placeholder = 'Password';
-                    passwordField.required = true;
-
-                const submitButton = document.createElement('button')
-                    submitButton.type = 'submit';
-                    submitButton.textContent = 'Submit';
-
-                form.appendChild(usernameField);
-                form.appendChild(passwordField);
-                form.appendChild(submitButton)
-
-                popupContent.appendChild(form);
-                form.onsubmit = function (e) {e.preventDefault(); handlePopupSubmission(new FormData(form))};
-            }
-            else {
-                messageElement.textContent = message
-                popupContent.appendChild(messageElement)
-            }
-            return false
-        }
-        function handlePopupSubmission(formData) {
-            const data = Object.fromEntries(formData.entries()); // Convert FormData to JSON object
-
-            // Send form data to the Flask backend
-            fetch('/log_reservation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data), // Convert data to JSON string
-            })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json(); // Parse JSON response
-                    } else {
-                        throw new Error('Failed to submit the form.');
-                    }
-                })
-                .then(result => {
-                    console.log('Form submission successful:', result.message);
-                    alert(result.message); // Show success message
-                    document.querySelector('.flash-popup').style.display = 'none'; // Close popup
-                })
-                //Error handling
-                .catch(error => {
-                    console.error('Error:', error.message);
-                    alert('Error: ' + error.message); // Show error message
-                });
         }
 
         window.onload = function() {

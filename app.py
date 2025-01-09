@@ -16,6 +16,7 @@ from flask_socketio import SocketIO
 
 from urllib.parse import urlparse
 from datetime import time, datetime, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from config import Config
 from dbManager import database, tablesCheck
@@ -25,6 +26,7 @@ app.config.from_object(Config) #Fetch Config class and apply
 app.debug = True
 init_app(app)
 
+scheduler = BackgroundScheduler()
 
 socketio = SocketIO(app, ssl_context='adhoc') #enable SSL, 'adhoc' self signs the certificate, DEV ONLY
 AD_KEY = app.config['AD_KEY']
@@ -42,24 +44,51 @@ def isSafeRedirect(target):
     parsed_url = urlparse(target)
     return parsed_url.netloc == "" #Allow only relative urls
 
-def main():
-    print()
 
-def lockPC():
-    print()
+def lockPC(reservation):
+    print(reservation.user_id)
 
-def authUser():
-    print()
+
+def check_reservations():
+    with app.app_context():
+        # Fetch current date and time
+        now = datetime.now()
+        nowPlusFive = now + timedelta(days=15)
+
+        # Extract current date and time for filtering
+        today = now.date()
+        current_time = now.time()
+        time_plus_five = nowPlusFive.time()
+
+        # Query for reservations where they match the following query
+        reservationList = Reservation.query.filter(
+            Reservation.date == today,  # Match today's date
+            Reservation.start_time > current_time,  # Start time is after current time
+            Reservation.start_time <= time_plus_five  # Start time is no more than 5 minutes away
+        ).all()
+
+        if reservationList:
+            print("Reservations found:", reservationList)
+        else:
+            print("No reservations found within the next 5 minutes.")
+
+        # Lock PCs for all reservations found
+        for reservation in reservationList:
+            print(f"Locking PC for {reservation.user_id} on {reservation.hostname}")
+            lockPC(reservation)
+
 
 @login_manager.user_loader
 def load_user(username):
-    return User.query.get(username)  # Adjust this if your primary key is not `username`
+    return User.query.filter_by(username=username).first()
+
 
 @app.route('/')
 @login_required
 def index():
     rooms = Room.query.all()
     clear_expired_reservations()
+    check_reservations()
     return render_template('index.html', rooms=rooms)
 
 #FlaskForms
@@ -93,27 +122,45 @@ class ReserveForm(FlaskForm):
                         for minutes in range(30, 241, 30)], validators=[DataRequired()])
     submit = SubmitField('Reserve')
 
-@app.route('/login', methods = ['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        #Retrieve input from login form
+        # Retrieve input from login form
         username = request.form.get('username')
         password = request.form.get('password')
+
+        # Validate if username and password are provided
+        if not username or not password:
+            flash("Username and password are required!", "danger")
+            return render_template('login.html')  # Stay on the login page if validation fails
+
+        # Check if user exists
         user = User.query.filter_by(username=username).first()
-        #Check if user valid, check password hash
-        if user and bcrypt.check_password_hash(user.password, password):
-            log_event(username, "", "Login Successful", ("User " + username + " logged in successfully"))
-            login_user(user)
-            next = request.args.get('next')
-            #Ensure user is redirected to 'safe' page (page within our site)
-            if isSafeRedirect(next):
-                return redirect(next)
-            else: #Return to index page if not safe url
-                return redirect(url_for('index')) #If unsafe, default to index
+        if not user:
+            flash("Invalid username!", "danger")
+            log_event(username, "", "Login Unsuccessful", f"User {username} attempted to log in with invalid username")
+            return render_template('login.html')
+
+        # Check if password is correct
+        if not bcrypt.check_password_hash(user.password, password):
+            flash("Incorrect password!", "danger")
+            log_event(username, "", "Login Unsuccessful", f"User {username} attempted to log in with incorrect password")
+            return render_template('login.html')
+
+        # User is valid after all the above checks
+        log_event(username, "", "Login Successful", f"User {username} logged in successfully")
+        login_user(user)
+
+        # Handle redirection after login
+        next_page = request.args.get('next')
+        # Ensure the user is redirected to a safe URL (within the site)
+        if isSafeRedirect(next_page):
+            return redirect(next_page)
         else:
-            log_event(username, "", "Login Unsuccessful", ("User " + username + " attempted to login unsuccessfully"))
-            flash("Credentials incorrect", "warning")
+            return redirect(url_for('index'))  # Default to index page if unsafe URL
+
     return render_template('login.html')
+
 @app.route('/logout')
 def logout():
     log_event(current_user.username, "", "Logout", ("User " + current_user.username + " was logged out"))
@@ -157,7 +204,6 @@ def reserve(hostname):
     #Check for conflicts with existing reservations
     existing_reservation = Reservation.query.filter_by(user_id=current_user.username).first()
     if form.validate_on_submit():
-        print("Form valid")
         # Check if student has prior reservation, only 1 reservation allowed at a time
         if existing_reservation:
             log_event(current_user.username, device.hostname, "Reservation", ("User " + current_user.username + " attempted to reserve " + device.hostname + ", but they have an existing reservation"))
@@ -225,11 +271,11 @@ def reserve(hostname):
         database.session.add(attempt_reservation)
         database.session.commit()
 
-        log_event(current_user.username, device.hostname, "Reservation", ("User " + current_user.username + " attempted to reserve " + device.hostname + ", successfully"))
-        flash('Reservation successful!', 'success')
-        return redirect(url_for('index'))
+        log_event(current_user.username, device.hostname, "Reservation Success", ("User " + current_user.username + " attempted to reserve " + device.hostname + ", successfully"))
+        flash('Reservation successful! Please confirm your credentials so that your workstation may be locked', 'success')
+        return redirect(url_for('log_credentials'))
     else:
-        log_event(current_user.username, device.hostname, "Reservation", ("User " + current_user.username + " posted invalid reservation form, error as follows: " + ''.join(form.errors)))
+        log_event(current_user.username, device.hostname, "Reservation Failure", ("User " + current_user.username + " posted invalid reservation form, error as follows: " + ''.join(form.errors)))
         print("Form invalid", form.errors)
     return render_template('reserve.html', room=room_object, hostname=hostname, timetable=timetable, hours=hours, reservations=reservations, form=form, existing_reservation=existing_reservation)
 
@@ -239,11 +285,11 @@ def cancel_reservation(user_id):
     if reservation and reservation.user_id == current_user.username:
         database.session.delete(reservation)
         database.session.commit()
-        log_event(current_user.username, reservation.hostname, "Cancellation", ("User " + current_user.username + " attempted to cancel reservation on " + reservation.hostname + ", successfully"))
+        log_event(current_user.username, reservation.hostname, "Cancellation Success", ("User " + current_user.username + " attempted to cancel reservation on " + reservation.hostname + ", successfully"))
         flash('Reservation cancelled!', 'success')
     else:
         flash('Reservation not found or insufficient permissions', 'warning')
-        log_event(current_user.username, reservation.hostname, "Cancellation", ("User " + current_user.username + " attempted to cancel reservation on " + reservation.hostname + ", unsuccessfully"))
+        log_event(current_user.username, reservation.hostname, "Cancellation Failure", ("User " + current_user.username + " attempted to cancel reservation on " + reservation.hostname + ", unsuccessfully"))
     return redirect(url_for('index'))
 
 def clear_expired_reservations():
@@ -261,37 +307,56 @@ def clear_expired_reservations():
     # Commit changes to the database
     database.session.commit()
 
-@app.route('/log_reservation', methods=['POST'])
-def log_reservation():
-    credentials = request.json
-    username = credentials['username']
-    password = credentials['password']
+@app.route('/log_credentials', methods=['POST', 'GET'])
+def log_credentials():
+    if request.method == 'POST':
+        # Retrieve input from login form
+        username = request.form.get('username')
+        password = request.form.get('password')
+        print(username, password)
 
-    if not username or not password: #Validate input
-        return jsonify({'message': 'Username AND Password are required.'}), 400
-    hashed = User.query.filter_by(username=current_user.username).first().password
-    if bcrypt.check_password_hash(hashed, password):
-        # Encrypting data with the AD server public key
-        encrypted_pass = AD_KEY.encrypt(
-            password,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-        reservation = Reservation.query.filter_by(username=username).first()
+        # Validate if username and password are provided
+        if not username or not password:
+            flash('Username and password are required!', 'danger')
+            return render_template('validate.html')
+
+        # Check if user exists
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            flash('Invalid username!', 'danger')
+            return render_template('validate.html')
+
+        # Check if password is correct
+        if not bcrypt.check_password_hash(user.password, password):
+            flash('Incorrect password!', 'danger')
+            return render_template('validate.html')
+
+        # After validation, proceed with the reservation logic
+        reservation = Reservation.query.filter_by(user_id=username).first()
         if reservation:
             hostname = reservation.hostname
+        else:
+            flash('Reservation not found!', 'danger')
+            return render_template('validate.html')
+
         device = Device.query.filter_by(hostname=hostname).first()
         if device:
             address = device.address
+
+        # Save the connection information
         ConnectionInfo = Credential(
             username=username,
-            password=encrypted_pass,
+            password=password,
             hostname=hostname,
             address=address
         )
+        database.session.add(ConnectionInfo)
+        database.session.commit()
+
+        flash('Credentials validated successfully!', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('validate.html')
 
 
 def log_event(user_id, device_id, action, description):
@@ -312,4 +377,6 @@ def log_event(user_id, device_id, action, description):
 
 if __name__ == "__main__":
     tablesCheck()
+    scheduler.add_job(func=check_reservations, trigger='interval', seconds=30)
+    scheduler.start()
     app.run()  # This will only run if this script is executed directly

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Credentials</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .messages { color: red; list-style: none; padding: 0; }
+        .form-container { max-width: 400px; margin: auto; padding: 1em; border: 1px solid #ccc; border-radius: 5px; }
+        .form-container label { display: block; margin-bottom: 0.5em; }
+        .form-container input { width: 100%; max-width: 350px; padding: 0.5em; margin-bottom: 1em; margin: auto; display: block; }
+        .form-container input[type="submit"] { margin-top: 10px; }
+        .messages .success { color: green; }
+        .messages .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Validate credentials to finalise reservation.</h2>
+
+        <!-- Login Form -->
+        <form method="post" action="{{ url_for('log_credentials') }}">
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required autocomplete="off">
+
+            <input type="submit" value="Confirm">
+        </form>
+    </div>
+    <!-- Popup Messages -->
+    <div class="flash-popup">
+        <div class="flash-popup-content">
+            <p class="flash-message"></p>
+            <button class="close-btn">&times;</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function showPopup(message, type) {
+            const popup = document.querySelector('.flash-popup');
+            const popupContent = document.querySelector('.flash-popup-content');
+            const messageElement = document.querySelector('.flash-message');
+            const closeButton = document.querySelector('.close-btn');
+
+            popup.style.display = 'flex'; // Show the popup overlay
+            popupContent.classList.add(type); // Add the type (success, warning, danger) class
+            messageElement.textContent = message; // Set the message text
+
+            // Optional: Hide the popup when clicking the close button
+            closeButton.onclick = function() {
+                popup.style.display = 'none';
+            };
+        }
+
+        window.onload = function() {
+            const flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
+            console.log(flashMessages);
+            if (flashMessages.length > 0) {
+                const message = flashMessages[0][1]; // Get the message text
+                const type = flashMessages[0][0]; // Get the category (success, warning, danger)
+                showPopup(message, type); // Display the popup
+            }
+        };
+    </script>
+</body>
+</html>

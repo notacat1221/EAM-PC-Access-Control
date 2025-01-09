@@ -28,3 +28,11 @@ class Config:
         'reservations': 'mysql+pymysql://PyManager:%Pa55w0rd@localhost/reservations'
     }
 
+    # LDAP Configs
+    LDAP_SERVER = os.environ.get('LDAP_SERVER', 'ldap://your-ad-server.local')
+    LDAP_PORT = int(os.environ.get('LDAP_PORT', 389))  # Default for LDAP
+    LDAP_USER = os.environ.get('LDAP_USER', 'CN=Admin,CN=Users,DC=example,DC=com')  # AD Admin account
+    LDAP_PASSWORD = os.environ.get('LDAP_PASSWORD', 'your_password')  # Admin password
+    LDAP_BASE_DN = os.environ.get('LDAP_BASE_DN', 'DC=example,DC=com')  # Base DN for searching
+    LDAP_USE_SSL = bool(os.environ.get('LDAP_USE_SSL', False))  # Use LDAPS (SSL)
+

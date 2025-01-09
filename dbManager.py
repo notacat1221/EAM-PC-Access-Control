@@ -18,12 +18,13 @@ def tablesCheck():
         'reservations': ['user_id', 'hostname', 'room_number', 'start_time', 'end_time', 'date'],
         'auditlogs': ['user_id', 'device_id', 'action', 'description', 'timestamp'],
         'rooms': ['room_number', 'eam_room'],
-        'timetable': ['id', 'room_number', 'day_of_week', 'start_time', 'end_time']
+        'timetable': ['id', 'room_number', 'day_of_week', 'start_time', 'end_time'],
+        'pendingcredentials': ['username', 'password', 'hostname', 'address']
     }
 
     with app.app_context():
         inspector = inspect(database.engine)  # Get the inspector for the engine
-        for table in [User.__table__, Device.__table__, Reservation.__table__, AuditLog.__table__, Room.__table__, Timetable.__table__]:
+        for table in [User.__table__, Device.__table__, Reservation.__table__, AuditLog.__table__, Room.__table__, Timetable.__table__, Credential.__table__]:
             if not inspector.has_table(table.name):  # Use the inspector to check if the table exists
                 table.create(database.engine)
                 print(f"Table '{table.name}' created successfully.")
@@ -60,7 +61,7 @@ class Device(database.Model):
     __tablename__ = 'devices'
 
     hostname = database.Column(database.String(20), unique=True, nullable=False, primary_key=True)
-    address = database.Column(database.String(15), nullable=False)
+    address = database.Column(database.String(15), unique=True, nullable=False)
     room_number = database.Column(database.String(4), database.ForeignKey('rooms.room_number'), nullable=False)
     eam_assigned_student = database.Column(database.String(8), nullable=True)
 
@@ -77,6 +78,9 @@ class Reservation(database.Model):
     date = database.Column(database.Date, nullable=False)
 
     __table_args__ = (database.UniqueConstraint('user_id', 'hostname', name='uid_hostname_constraint'),)
+
+    def __repr__(self):
+        return f"<Reservation ID={self.id}, User={self.user_id}, Start Time={self.start_time}>"
 
 class AuditLog(database.Model):
     __tablename__ = 'auditlogs'
