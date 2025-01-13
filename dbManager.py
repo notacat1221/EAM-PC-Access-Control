@@ -79,8 +79,6 @@ class Reservation(database.Model):
 
     __table_args__ = (database.UniqueConstraint('user_id', 'hostname', name='uid_hostname_constraint'),)
 
-    def __repr__(self):
-        return f"<Reservation ID={self.id}, User={self.user_id}, Start Time={self.start_time}>"
 
 class AuditLog(database.Model):
     __tablename__ = 'auditlogs'

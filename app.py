@@ -1,22 +1,22 @@
-from flask import Flask, url_for, request, redirect, render_template, abort, session, flash, jsonify
+from flask import Flask, url_for, request, redirect, render_template, session, flash
 from flask_login import LoginManager, login_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import serialization
+from cryptography.fernet import Fernet
+import base64
 
 from flask_wtf import FlaskForm
-from pip._internal.network.auth import Credentials
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 
 from flask_socketio import SocketIO
+from flask_httpauth import HTTPBasicAuth
 
 from urllib.parse import urlparse
 from datetime import time, datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+
+import winrm
 
 from config import Config
 from dbManager import database, tablesCheck
@@ -27,6 +27,10 @@ app.debug = True
 init_app(app)
 
 scheduler = BackgroundScheduler()
+auth = HTTPBasicAuth()
+
+key = app.config['ENCRYPTION_KEY']
+cipher = Fernet(key)
 
 socketio = SocketIO(app, ssl_context='adhoc') #enable SSL, 'adhoc' self signs the certificate, DEV ONLY
 AD_KEY = app.config['AD_KEY']
@@ -46,14 +50,38 @@ def isSafeRedirect(target):
 
 
 def lockPC(reservation):
-    print(reservation.user_id)
+    try:
+        credential = Credential.query.filter_by(user_id=reservation.user_id).first()
+        if not credential:
+            flash("Credential not found", "danger")
+            return
+        username = credential.username
+        encoded_password = credential.password #Password is still encoded from storage
+        address = credential.address
+
+        encrypted_password = base64.b64decode(encoded_password) #Base64 decode pass first
+        password = (cipher.decrypt(encrypted_password)).decode("utf-8")
+
+        #Establish WinRM session
+        sessionRM = winrm.Session(f'http://{address}:5985/wsman', auth=(username, password))
+
+        #Attempt locking
+        command = 'rundll32.exe user32.dll,LockWorkStation'
+        result = sessionRM.run_cmd(command)
+
+        if result.status_code == 0:
+            log_event(username, credential.hostname, "PC Locked Successfully", f"PC {credential.hostname} locked for user {username}")
+        else:
+            log_event(username, credential.hostname, "PC Locked Unsuccessfully", f"PC {credential.hostname} was not locked for user {username}")
+    except Exception as e:
+        print(e)
 
 
 def check_reservations():
     with app.app_context():
         # Fetch current date and time
         now = datetime.now()
-        nowPlusFive = now + timedelta(days=15)
+        nowPlusFive = now + timedelta(minutes=5)
 
         # Extract current date and time for filtering
         today = now.date()
@@ -63,19 +91,15 @@ def check_reservations():
         # Query for reservations where they match the following query
         reservationList = Reservation.query.filter(
             Reservation.date == today,  # Match today's date
-            Reservation.start_time > current_time,  # Start time is after current time
-            Reservation.start_time <= time_plus_five  # Start time is no more than 5 minutes away
         ).all()
 
         if reservationList:
-            print("Reservations found:", reservationList)
-        else:
-            print("No reservations found within the next 5 minutes.")
-
-        # Lock PCs for all reservations found
-        for reservation in reservationList:
-            print(f"Locking PC for {reservation.user_id} on {reservation.hostname}")
-            lockPC(reservation)
+            # Lock PCs for all reservations found
+            for reservation in reservationList:
+                if reservation.start_time > current_time and reservation.start_time <= time_plus_five:
+                    lockPC(reservation)
+                elif reservation.end_time < current_time:
+                    clear_expired_reservations(reservation)
 
 
 @login_manager.user_loader
@@ -87,7 +111,6 @@ def load_user(username):
 @login_required
 def index():
     rooms = Room.query.all()
-    clear_expired_reservations()
     check_reservations()
     return render_template('index.html', rooms=rooms)
 
@@ -142,7 +165,7 @@ def login():
             return render_template('login.html')
 
         # Check if password is correct
-        if not bcrypt.check_password_hash(user.password, password):
+        if not verify_password(username, password):
             flash("Incorrect password!", "danger")
             log_event(username, "", "Login Unsuccessful", f"User {username} attempted to log in with incorrect password")
             return render_template('login.html')
@@ -160,6 +183,14 @@ def login():
             return redirect(url_for('index'))  # Default to index page if unsafe URL
 
     return render_template('login.html')
+
+@auth.verify_password
+def verify_password(username, password):
+    user = User.query.filter_by(username=username).first()
+    if user and bcrypt.check_password_hash(user.password, password):
+        return True
+    return False
+
 
 @app.route('/logout')
 def logout():
@@ -276,7 +307,6 @@ def reserve(hostname):
         return redirect(url_for('log_credentials'))
     else:
         log_event(current_user.username, device.hostname, "Reservation Failure", ("User " + current_user.username + " posted invalid reservation form, error as follows: " + ''.join(form.errors)))
-        print("Form invalid", form.errors)
     return render_template('reserve.html', room=room_object, hostname=hostname, timetable=timetable, hours=hours, reservations=reservations, form=form, existing_reservation=existing_reservation)
 
 @app.route('/cancel_reservation/<string:user_id>', methods=['POST'])
@@ -292,18 +322,10 @@ def cancel_reservation(user_id):
         log_event(current_user.username, reservation.hostname, "Cancellation Failure", ("User " + current_user.username + " attempted to cancel reservation on " + reservation.hostname + ", unsuccessfully"))
     return redirect(url_for('index'))
 
-def clear_expired_reservations():
-    now = datetime.now()
-    today = now.date()
-    existing_reservation = Reservation.query.filter_by(user_id=current_user.username).first()
-    # Combine date and end_time to create a datetime object for comparison
-    expired_reservations = Reservation.query.filter((Reservation.date <= today) & (Reservation.end_time < now))
-
-    # Loop through expired reservations and delete them
-    for reservation in expired_reservations:
-        log_event(reservation.user_id, reservation.hostname, "Expired Reservation", ("Reservation made by " + reservation.user_id + " on device " + reservation.hostname + " has expired"))
-        database.session.delete(reservation)
-
+def clear_expired_reservations(reservation):
+    #Log reservation being cleared whenever func called
+    log_event(reservation.user_id, reservation.hostname, "Expired Reservation", ("Reservation made by " + reservation.user_id + " on device " + reservation.hostname + " has expired"))
+    database.session.delete(reservation)
     # Commit changes to the database
     database.session.commit()
 
@@ -313,7 +335,6 @@ def log_credentials():
         # Retrieve input from login form
         username = request.form.get('username')
         password = request.form.get('password')
-        print(username, password)
 
         # Validate if username and password are provided
         if not username or not password:
@@ -342,11 +363,16 @@ def log_credentials():
         device = Device.query.filter_by(hostname=hostname).first()
         if device:
             address = device.address
+        else:
+            flash('Device not found!', 'danger')
+            return render_template('validate.html')
 
+        #Encrypt password before it is stored in the database
+        encrypted_password = cipher.encrypt(password.encode()).decode('utf-8')
         # Save the connection information
         ConnectionInfo = Credential(
             username=username,
-            password=password,
+            password=encrypted_password,
             hostname=hostname,
             address=address
         )
@@ -377,6 +403,6 @@ def log_event(user_id, device_id, action, description):
 
 if __name__ == "__main__":
     tablesCheck()
-    scheduler.add_job(func=check_reservations, trigger='interval', seconds=30)
+    scheduler.add_job(func=check_reservations, trigger='interval', minutes=5)
     scheduler.start()
-    app.run()  # This will only run if this script is executed directly
+    app.run(host='0.0.0.0', port=5000)  # This will only run if this script is executed directly
