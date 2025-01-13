@@ -161,7 +161,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if not user:
             flash("Invalid username!", "danger")
-            log_event(username, "", "Login Unsuccessful", f"User {username} attempted to log in with invalid username")
+            log_event("", "", "Login Unsuccessful", f"User {username} attempted to log in with invalid username")
             return render_template('login.html')
 
         # Check if password is correct
